@@ -110,8 +110,9 @@ class Blockchain:
             self.tries = 0
         else:
             if self.tries <= 5:
-                print("Block couldn't be added due to some error! Trying again...")
-                sleep(randint(2, 5) ** self.tries)
+                t = randint(2, 5) ** self.tries
+                print(f"Block couldn't be added due to some error! Trying again...after {t} secs")
+                sleep(t)
                 self.tries += 1
                 block = self.commit_block()
             else:
