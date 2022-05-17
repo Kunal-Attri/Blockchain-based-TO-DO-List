@@ -7,6 +7,7 @@ from lib.Utilities import get_integer, uuid
 from flask import Flask, jsonify, request
 import requests
 from threading import Thread
+from time import sleep
 
 # Initiating the blockchain
 blockchain = Blockchain()
@@ -111,6 +112,8 @@ Actions:
         ip = "http://"
         ip += f"{extract_ip()}:{port}"
         requests.post(f"{MAIN_SERVER}/nodes/register", json={"nodes": [ip], "new": 'True'})
+        sleep(2)
+        blockchain.resolve_conflicts()
     elif inp == 5:
         node_address = input("Peer node address('http://ip:port): ")
         added = blockchain.register_node(node_address)
