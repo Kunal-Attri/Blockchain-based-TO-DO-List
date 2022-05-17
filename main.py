@@ -66,6 +66,18 @@ def node_server(my_port):
     app.run(host='0.0.0.0', port=my_port)
 
 
+def extract_ip():
+    st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        st.connect(('10.255.255.255', 1))
+        IP = st.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        st.close()
+    return IP
+
+
 while True:
     print("""
 Actions: 
@@ -97,7 +109,7 @@ Actions:
         node_thread.daemon = True
         node_thread.start()
         ip = "http://"
-        ip += f"{socket.gethostbyname(socket.gethostname())}:{port}"
+        ip += f"{extract_ip()}:{port}"
         requests.post(f"{MAIN_SERVER}/nodes/register", json={"nodes": [ip], "new": 'True'})
     elif inp == 5:
         node_address = input("Peer node address('http://ip:port): ")
