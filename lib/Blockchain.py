@@ -1,6 +1,6 @@
 import hashlib
 import json
-from time import time
+from time import time, sleep
 from urllib.parse import urlparse
 import requests
 
@@ -110,6 +110,7 @@ class Blockchain:
         else:
             if self.tries < 3:
                 print("Block couldn't be added due to some error! Trying again...")
+                sleep(3)
                 self.tries += 1
                 self.new_block(proof, previous_hash)
             else:

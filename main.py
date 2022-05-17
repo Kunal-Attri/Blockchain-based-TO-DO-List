@@ -72,7 +72,7 @@ def unregister_nodes():
     if nodes is None:
         return "Error: Please supply a valid list of nodes", 400
     for node in nodes:
-        a = blockchain.unregister_node(node)
+        blockchain.unregister_node(node)
 
     response = {
         'message': 'New nodes have been removed',
