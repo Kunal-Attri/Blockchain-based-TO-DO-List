@@ -2,7 +2,7 @@ from lib.Blockchain import Blockchain
 from lib.User import user_main
 from lib.Users_DB import authenticate_user, add_user
 from lib.Utilities import get_integer, uuid
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from threading import Thread
 
 # Initiating the blockchain
