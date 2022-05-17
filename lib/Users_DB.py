@@ -12,4 +12,4 @@ def authenticate_user(usr_id):
 
 def add_user(usr_id):
     f = open('lib/users', 'a')
-    f.writelines(["\n", get_hash(usr_id)])
+    f.writelines([get_hash(usr_id), "\n"])

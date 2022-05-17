@@ -23,8 +23,19 @@ def full_chain():
     return jsonify(response), 200
 
 
-def node_server(port):
-    app.run(host='0.0.0.0', port=port)
+@app.route('/chain/update', methods=['GET'])
+def update_chain():
+    updated = blockchain.resolve_conflicts()
+    if updated:
+        print('Node synced successfully!')
+    response = {
+        'updated': True,
+    }
+    return jsonify(response), 200
+
+
+def node_server(my_port):
+    app.run(host='0.0.0.0', port=my_port)
 
 
 while True:
@@ -35,7 +46,7 @@ Actions:
 3. Show full chain
 4. Start Server node
 5. Add peer nodes
-6. Sync with peer nodes
+6. Remove peer nodes
 7. Exit""")
     inp = get_integer("\nInput: ")
     if inp == 1:
@@ -59,14 +70,12 @@ Actions:
         node_thread.start()
     elif inp == 5:
         node_address = input("Peer node address('http://ip:port): ")
-        blockchain.register_node(node_address)
-        print('Node added...')
-        print(f'Peer nodes: {blockchain.nodes}')
+        added = blockchain.register_node(node_address)
+        if added:
+            print('Node added...')
+            print(f'Peer nodes: {blockchain.nodes}')
     elif inp == 6:
-        changes = blockchain.resolve_conflicts()
-        if changes:
-            print('Node synced successfully!')
-        else:
-            print('Node already most updated, no changes made!')
+        node_address = input("Peer node address(same as entered previously): ")
+        blockchain.unregister_nodes(node_address)
     elif inp == 7:
         exit()

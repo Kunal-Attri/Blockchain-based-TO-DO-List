@@ -20,10 +20,18 @@ class Blockchain:
         parsed_url = urlparse(address)
         if parsed_url.netloc:
             self.nodes.add(parsed_url.netloc)
+            return True
         elif parsed_url.path:
             self.nodes.add(parsed_url.path)
+            return True
         else:
-            raise ValueError('Invalid URL')
+            print('Invalid URL')
+            return False
+
+    def unregister_nodes(self, address):
+        parsed_url = urlparse(address)
+        if parsed_url in self.nodes:
+            self.nodes.remove(parsed_url)
 
     def valid_chain(self, chain):
         last_block = chain[0]
@@ -31,9 +39,9 @@ class Blockchain:
 
         while current_index < len(chain):
             block = chain[current_index]
-            print(f'{last_block}')
-            print(f'{block}')
-            print("\n-----------\n")
+            # print(f'{last_block}')
+            # print(f'{block}')
+            # print("\n-----------\n")
             last_block_hash = self.hash(last_block)
             if block['previous_hash'] != last_block_hash:
                 return False
@@ -64,8 +72,15 @@ class Blockchain:
 
         if new_chain:
             self.chain = new_chain
+            self.update_peers()
             return True
         return False
+
+    def update_peers(self, new=False):
+        if new:
+            print('Chain updated broadcast...')
+        for node in self.nodes:
+            requests.get(f'http://{node}/chain/update')
 
     def new_block(self, proof, previous_hash):
         block = {
@@ -78,6 +93,7 @@ class Blockchain:
 
         self.current_transactions = []
         self.chain.append(block)
+        self.update_peers(True)
         return block
 
     def new_transaction(self, user_id, work_info, completed=0, work_id=None):

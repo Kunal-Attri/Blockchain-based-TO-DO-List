@@ -16,10 +16,6 @@ class User:
         print(f"Previous hash: {block['previous_hash']}\n")
 
     def transaction(self, work_info, work_id=None):
-        if len(self.blockchain.current_transactions) >= 3:
-            print("\nBlock full...committing block into chain")
-            self.commit()
-
         if work_id is None:
             self.blockchain.new_transaction(self.usr_id, work_info)
         else:
@@ -30,6 +26,10 @@ class User:
         print(f"Work ID: {txn['work_id']}")
         print(f"Work Info: {txn['work_info']}")
         print(f"Completed: {bool(txn['completed'])}")
+
+        if len(self.blockchain.current_transactions) >= 3:
+            print("\nBlock full...committing block into chain")
+            self.commit()
 
     def add_work(self):
         work_info = input("Work Info: ")
