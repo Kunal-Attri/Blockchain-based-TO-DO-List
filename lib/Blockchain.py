@@ -76,7 +76,7 @@ class Blockchain:
                     length = response.json()['length']
                     chain = response.json()['chain']
 
-                    if length > max_length and self.valid_chain(chain):
+                    if length >= max_length and self.valid_chain(chain):
                         max_length = length
                         new_chain = chain
 
@@ -112,7 +112,7 @@ class Blockchain:
                 print("Block couldn't be added due to some error! Trying again...")
                 sleep(3)
                 self.tries += 1
-                self.new_block(proof, previous_hash)
+                block = self.commit_block()
             else:
                 print("Block addition aborted!!!")
                 self.tries = 0
