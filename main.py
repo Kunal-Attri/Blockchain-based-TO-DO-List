@@ -17,6 +17,7 @@ app = Flask(__name__)
 node_thread = None
 
 MAIN_SERVER = 'http://172.25.169.52:5000'
+MY_IP = 'http://'
 blockchain.register_node(MAIN_SERVER)
 
 
@@ -59,7 +60,27 @@ def register_nodes():
     if socket.gethostbyname(socket.gethostname()) == "172.25.169.52" and values.get('new') == 'True':
         for node in blockchain.nodes:
             requests.post(f"http://{node}/nodes/register", json={"nodes": a})
-    print(blockchain.nodes)
+    return jsonify(response), 201
+
+
+@app.route('/nodes/unregister', methods=['POST'])
+def unregister_nodes():
+    values = request.get_json()
+    nodes = values.get('nodes')
+    if nodes is None:
+        return "Error: Please supply a valid list of nodes", 400
+    for node in nodes:
+        a = blockchain.unregister_node(node)
+        print(a)
+
+    response = {
+        'message': 'New nodes have been removed',
+        'total_nodes': list(blockchain.nodes),
+    }
+    if socket.gethostbyname(socket.gethostname()) == "172.25.169.52" and values.get('new') == 'True':
+        for node in blockchain.nodes:
+            if f'http://{node}' != MAIN_SERVER:
+                requests.post(f"http://{node}/nodes/unregister", json={"nodes": nodes})
     return jsonify(response), 201
 
 
@@ -85,10 +106,9 @@ Actions:
 1. Login
 2. New User
 3. Show full chain
-4. Start Server node
-5. Add peer nodes
-6. Remove peer nodes
-7. Exit""")
+4. Show all nodes
+5. Start Server node
+6. Exit""")
     inp = get_integer("\nInput: ")
     if inp == 1:
         usr_id = input("User ID: ")
@@ -105,23 +125,23 @@ Actions:
         print(f'Length of chain: {len(blockchain.chain)} blocks')
         print(f'Chain: f{blockchain.chain}')
     elif inp == 4:
-        port = get_integer("Port (default - 5000): ", defaultVal=5000)
-        node_thread = Thread(target=node_server, args=[port])
-        node_thread.daemon = True
-        node_thread.start()
-        ip = "http://"
-        ip += f"{extract_ip()}:{port}"
-        requests.post(f"{MAIN_SERVER}/nodes/register", json={"nodes": [ip], "new": 'True'})
-        sleep(2)
-        blockchain.resolve_conflicts()
+        print(f'No of nodes: {len(blockchain.nodes)} nodes')
+        print(f'Nodes: f{blockchain.nodes}')
     elif inp == 5:
-        node_address = input("Peer node address('http://ip:port): ")
-        added = blockchain.register_node(node_address)
-        if added:
-            print('Node added...')
-            print(f'Peer nodes: {blockchain.nodes}')
-    elif inp == 6:
-        node_address = input("Peer node address(same as entered previously): ")
-        blockchain.unregister_nodes(node_address)
+        if len(MY_IP) <= 10:
+            port = get_integer("Port (default - 5000): ", defaultVal=5000)
+            node_thread = Thread(target=node_server, args=[port])
+            node_thread.daemon = True
+            node_thread.start()
+            MY_IP += f"{extract_ip()}:{port}"
+            if MAIN_SERVER != MY_IP:
+                requests.post(f"{MAIN_SERVER}/nodes/register", json={"nodes": [MY_IP], "new": 'True'})
+                sleep(2)
+                blockchain.resolve_conflicts()
+        else:
+            print('Server already running...')
     elif inp == 7:
+        if len(MY_IP) > 10 and MY_IP != MAIN_SERVER:
+            requests.post(f"{MAIN_SERVER}/nodes/unregister", json={"nodes": [MY_IP], "new": 'True'})
+            sleep(2)
         exit()

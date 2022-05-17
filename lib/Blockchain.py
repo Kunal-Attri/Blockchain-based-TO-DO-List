@@ -28,10 +28,17 @@ class Blockchain:
             print('Invalid URL')
             return False
 
-    def unregister_nodes(self, address):
+    def unregister_node(self, address):
         parsed_url = urlparse(address)
-        if parsed_url in self.nodes:
-            self.nodes.remove(parsed_url)
+        if parsed_url.netloc in self.nodes:
+            self.nodes.remove(parsed_url.netloc)
+            return True
+        elif parsed_url.path in self.nodes:
+            self.nodes.remove(parsed_url.path)
+            return True
+        else:
+            print('Invalid URL')
+            return False
 
     def valid_chain(self, chain):
         last_block = chain[0]
