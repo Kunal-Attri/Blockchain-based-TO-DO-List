@@ -73,7 +73,6 @@ def unregister_nodes():
         return "Error: Please supply a valid list of nodes", 400
     for node in nodes:
         a = blockchain.unregister_node(node)
-        print(a)
 
     response = {
         'message': 'New nodes have been removed',
@@ -136,6 +135,7 @@ Actions:
             node_thread.daemon = True
             node_thread.start()
             MY_IP += f"{extract_ip()}:{port}"
+            blockchain.my_ip = MY_IP
             if MAIN_SERVER != MY_IP:
                 requests.post(f"{MAIN_SERVER}/nodes/register", json={"nodes": [MY_IP], "new": 'True'})
                 sleep(2)

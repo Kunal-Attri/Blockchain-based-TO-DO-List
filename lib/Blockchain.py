@@ -6,8 +6,6 @@ import requests
 
 from lib.Utilities import uuid, get_hash
 
-MAIN_SERVER = 'http://172.25.169.52:5000'
-
 
 class Blockchain:
     def __init__(self):
@@ -15,6 +13,7 @@ class Blockchain:
         self.chain = []
         self.nodes = set()
         self.tries = 0
+        self.my_ip = ''
 
         # default 1st block
         self.new_block(previous_hash='1', proof=100)
@@ -70,25 +69,26 @@ class Blockchain:
         max_length = len(self.chain)
 
         for node in neighbours:
-            response = requests.get(f'http://{node}/chain')
+            if f'http://{node}' != self.my_ip:
+                response = requests.get(f'http://{node}/chain')
 
-            if response.status_code == 200:
-                length = response.json()['length']
-                chain = response.json()['chain']
+                if response.status_code == 200:
+                    length = response.json()['length']
+                    chain = response.json()['chain']
 
-                if length > max_length and self.valid_chain(chain):
-                    max_length = length
-                    new_chain = chain
+                    if length > max_length and self.valid_chain(chain):
+                        max_length = length
+                        new_chain = chain
 
         if new_chain:
             self.chain = new_chain
             return True
         return False
 
-    def update_peers(self, new=False):
+    def update_peers(self):
         print('Chain updated broadcast...')
         for node in self.nodes:
-            if f'http://{node}' != MAIN_SERVER:
+            if f'http://{node}' != self.my_ip:
                 requests.get(f'http://{node}/chain/update')
 
     def new_block(self, proof, previous_hash):
