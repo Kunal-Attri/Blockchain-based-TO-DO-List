@@ -3,6 +3,7 @@ import json
 from time import time, sleep
 from urllib.parse import urlparse
 import requests
+from random import randint
 
 from lib.Utilities import uuid, get_hash
 
@@ -108,9 +109,9 @@ class Blockchain:
             self.current_transactions = []
             self.tries = 0
         else:
-            if self.tries < 3:
+            if self.tries < 5:
                 print("Block couldn't be added due to some error! Trying again...")
-                sleep(3)
+                sleep(randint(2, 5) ** self.tries)
                 self.tries += 1
                 block = self.commit_block()
             else:
