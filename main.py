@@ -1,5 +1,7 @@
 import socket
 
+from tabulate import tabulate
+
 from lib.Blockchain import Blockchain
 from lib.User import user_main
 from lib.Users_DB import authenticate_user, add_user
@@ -123,7 +125,7 @@ Actions:
         print("You must save it now to login!")
     elif inp == 3:
         print(f'Length of chain: {len(blockchain.chain)} blocks')
-        print(f'Chain: f{blockchain.chain}')
+        print(f'Chain: {tabulate(blockchain.chain)}')
     elif inp == 4:
         print(f'No of nodes: {len(blockchain.nodes)} nodes')
         print(f'Nodes: f{blockchain.nodes}')
@@ -140,7 +142,7 @@ Actions:
                 blockchain.resolve_conflicts()
         else:
             print('Server already running...')
-    elif inp == 7:
+    elif inp == 6:
         if len(MY_IP) > 10 and MY_IP != MAIN_SERVER:
             requests.post(f"{MAIN_SERVER}/nodes/unregister", json={"nodes": [MY_IP], "new": 'True'})
             sleep(2)

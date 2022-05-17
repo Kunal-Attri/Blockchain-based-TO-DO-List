@@ -6,12 +6,15 @@ import requests
 
 from lib.Utilities import uuid, get_hash
 
+MAIN_SERVER = 'http://172.25.169.52:5000'
+
 
 class Blockchain:
     def __init__(self):
         self.current_transactions = []
         self.chain = []
         self.nodes = set()
+        self.tries = 0
 
         # default 1st block
         self.new_block(previous_hash='1', proof=100)
@@ -85,7 +88,8 @@ class Blockchain:
     def update_peers(self, new=False):
         print('Chain updated broadcast...')
         for node in self.nodes:
-            requests.get(f'http://{node}/chain/update')
+            if f'http://{node}' != MAIN_SERVER:
+                requests.get(f'http://{node}/chain/update')
 
     def new_block(self, proof, previous_hash):
         block = {
@@ -96,9 +100,21 @@ class Blockchain:
             'previous_hash': previous_hash or self.hash(self.chain[-1]),
         }
 
-        self.current_transactions = []
         self.chain.append(block)
         self.update_peers()
+        self.resolve_conflicts()
+        if self.chain[-1]['transactions'] == self.current_transactions:
+            print('Block was added successfully!')
+            self.current_transactions = []
+            self.tries = 0
+        else:
+            if self.tries < 3:
+                print("Block couldn't be added due to some error! Trying again...")
+                self.tries += 1
+                self.new_block(proof, previous_hash)
+            else:
+                print("Block addition aborted!!!")
+                self.tries = 0
         return block
 
     def new_transaction(self, user_id, work_info, completed=0, work_id=None):
