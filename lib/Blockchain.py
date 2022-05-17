@@ -72,13 +72,11 @@ class Blockchain:
 
         if new_chain:
             self.chain = new_chain
-            self.update_peers()
             return True
         return False
 
     def update_peers(self, new=False):
-        if new:
-            print('Chain updated broadcast...')
+        print('Chain updated broadcast...')
         for node in self.nodes:
             requests.get(f'http://{node}/chain/update')
 
@@ -93,7 +91,7 @@ class Blockchain:
 
         self.current_transactions = []
         self.chain.append(block)
-        self.update_peers(True)
+        self.update_peers()
         return block
 
     def new_transaction(self, user_id, work_info, completed=0, work_id=None):

@@ -1,8 +1,11 @@
+import socket
+
 from lib.Blockchain import Blockchain
 from lib.User import user_main
 from lib.Users_DB import authenticate_user, add_user
 from lib.Utilities import get_integer, uuid
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+import requests
 from threading import Thread
 
 # Initiating the blockchain
@@ -11,6 +14,9 @@ blockchain = Blockchain()
 # Initiating the Node
 app = Flask(__name__)
 node_thread = None
+
+MAIN_SERVER = 'http://172.25.169.52:5000'
+blockchain.register_node(MAIN_SERVER)
 
 
 # for nodes
@@ -32,6 +38,28 @@ def update_chain():
         'updated': True,
     }
     return jsonify(response), 200
+
+
+@app.route('/nodes/register', methods=['POST'])
+def register_nodes():
+    values = request.get_json()
+    nodes = values.get('nodes')
+    if nodes is None:
+        return "Error: Please supply a valid list of nodes", 400
+    for node in nodes:
+        blockchain.register_node(node)
+
+    response = {
+        'message': 'New nodes have been added',
+        'total_nodes': list(blockchain.nodes),
+    }
+    a = list(blockchain.nodes).copy()
+    a = ["http://" + i for i in a]
+    if socket.gethostbyname(socket.gethostname()) == "172.25.169.52" and values.get('new') == 'True':
+        for node in blockchain.nodes:
+            requests.post(f"http://{node}/nodes/register", json={"nodes": a})
+    print(blockchain.nodes)
+    return jsonify(response), 201
 
 
 def node_server(my_port):
@@ -68,6 +96,9 @@ Actions:
         node_thread = Thread(target=node_server, args=[port])
         node_thread.daemon = True
         node_thread.start()
+        ip = "http://"
+        ip += f"{socket.gethostbyname(socket.gethostname())}:{port}"
+        requests.post(f"{MAIN_SERVER}/nodes/register", json={"nodes": [ip], "new": 'True'})
     elif inp == 5:
         node_address = input("Peer node address('http://ip:port): ")
         added = blockchain.register_node(node_address)
