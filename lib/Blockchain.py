@@ -3,7 +3,7 @@ import json
 from time import time, sleep
 from urllib.parse import urlparse
 import requests
-from random import randint
+from random import randint, random
 
 from lib.Utilities import uuid, get_hash
 
@@ -13,11 +13,26 @@ class Blockchain:
         self.current_transactions = []
         self.chain = []
         self.nodes = set()
-        self.tries = 0
+        self.tries = 1
         self.my_ip = ''
+        self.update_lock = False
 
         # default 1st block
         self.new_block(previous_hash='1', proof=100)
+
+    def lock(self):
+        if not self.update_lock:
+            self.update_lock = True
+            return 1
+        else:
+            return 0
+
+    def unlock(self):
+        if self.update_lock:
+            self.update_lock = False
+            return 1
+        else:
+            return 0
 
     def register_node(self, address):
         parsed_url = urlparse(address)
@@ -100,24 +115,23 @@ class Blockchain:
             'proof': proof,
             'previous_hash': previous_hash or self.hash(self.chain[-1]),
         }
-
         self.chain.append(block)
         self.update_peers()
         self.resolve_conflicts()
         if self.chain[-1]['transactions'] == self.current_transactions:
             print('Block was added successfully!')
             self.current_transactions = []
-            self.tries = 0
+            self.tries = 1
         else:
             if self.tries <= 5:
-                t = randint(2, 5) ** self.tries
+                t = randint(3, 2*len(self.nodes)) ** self.tries
                 print(f"Block couldn't be added due to some error! Trying again...after {t} secs")
                 sleep(t)
                 self.tries += 1
                 block = self.commit_block()
             else:
                 print("Block addition aborted!!!")
-                self.tries = 0
+                self.tries = 1
         return block
 
     def new_transaction(self, user_id, work_info, completed=0, work_id=None):
@@ -176,9 +190,40 @@ class Blockchain:
         return False
 
     def commit_block(self):
+        lock = False
+        while not lock and len(self.chain) > 1:
+            if 'http://172.25.169.52:5000' != self.my_ip:
+                resp = requests.post('http://172.25.169.52:5000/getlock')
+                if resp.status_code == 200:
+                    lock = True
+                else:
+                    t = random() * 5
+                    print(f"Another block addition in process, Trying again...after {t} secs")
+                    sleep(t)
+            else:
+                if self.lock():
+                    lock = True
+                else:
+                    t = random() * 5
+                    print(f"Another block addition in process, Trying again...after {t} secs")
+                    sleep(t)
+
         last_block = self.last_block
         proof = self.proof_of_work(last_block)
 
         previous_hash = self.hash(last_block)
         block = self.new_block(proof, previous_hash)
+        while lock and len(self.chain) > 1:
+            if 'http://172.25.169.52:5000' != self.my_ip:
+                print(self.my_ip)
+                resp = requests.post('http://172.25.169.52:5000/releaselock')
+                if resp.status_code == 201:
+                    lock = False
+            else:
+                if self.unlock():
+                    lock = False
+                else:
+                    t = random() * 5
+                    print(f"Another block removal in process, Trying again...after {t} secs")
+                    sleep(t)
         return block

@@ -23,6 +23,7 @@ MY_IP = 'http://'
 blockchain.register_node(MAIN_SERVER)
 
 
+
 # for nodes
 @app.route('/chain', methods=['GET'])
 def full_chain():
@@ -31,6 +32,36 @@ def full_chain():
         'length': len(blockchain.chain),
     }
     return jsonify(response), 200
+
+
+@app.route('/getlock', methods=['POST'])
+def get_lock():
+    update = blockchain.lock()
+    if update:
+        response = {
+            'lock': 'True'
+        }
+        return jsonify(response), 200
+    else:
+        response = {
+            'lock': 'False'
+        }
+        return jsonify(response), 400
+
+
+@app.route('/releaselock', methods=['POST'])
+def release_lock():
+    update = blockchain.unlock()
+    if update:
+        response = {
+            'released': 'True'
+        }
+        return jsonify(response), 201
+    else:
+        response = {
+            'released': 'False'
+        }
+        return jsonify(response), 401
 
 
 @app.route('/chain/update', methods=['GET'])
